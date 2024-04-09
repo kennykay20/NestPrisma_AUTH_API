@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { configs } from './config';
 import * as bodyParser from 'body-parser';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -14,6 +15,7 @@ async function bootstrap() {
     }),
   );
   app.use(bodyParser.json());
+  app.use(cookieParser());
   const config = new DocumentBuilder()
     .setTitle('Auth_api')
     .setDescription('The Pern authentication api ')

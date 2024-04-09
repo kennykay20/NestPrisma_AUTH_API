@@ -1,9 +1,15 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthDTO } from '../dto/auth.dto';
 import * as argon2 from 'argon2';
 import { JwtService } from '@nestjs/jwt';
 import { configs } from '../config';
+import { Request, Response } from 'express';
 
 @Injectable()
 export class AuthService {
@@ -40,7 +46,7 @@ export class AuthService {
       throw new Error('Failed to sign up user');
     }
   }
-  async signin(dto: AuthDTO) {
+  async signin(dto: AuthDTO, req: Request, res: Response) {
     const { email, password } = dto;
 
     try {
@@ -67,7 +73,13 @@ export class AuthService {
           email: existUser.email,
         };
         const accessToken = await this.signInToken(payload);
-        return { accessToken };
+        if (!accessToken) {
+          throw new ForbiddenException();
+        }
+        res.cookie('PERM_AUTH', accessToken);
+        res
+          .status(200)
+          .json({ message: 'login successfully', token: accessToken });
       } else {
         throw new BadRequestException('Password not match');
       }
