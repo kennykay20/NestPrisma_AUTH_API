@@ -113,7 +113,7 @@ export class AuthService {
 
   signInToken = async (args: { userId: string; email: string }) => {
     try {
-      const payload = { sub: args.userId, email: args.email };
+      const payload = { id: args.userId, email: args.email };
       const accessToken = await this.jwt.signAsync(payload, {
         secret: configs.secret,
       });

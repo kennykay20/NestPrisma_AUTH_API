@@ -1,4 +1,5 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import { Request } from 'express';
 import { PrismaService } from 'prisma/prisma.service';
 
 @Injectable()
@@ -21,8 +22,9 @@ export class UsersService {
     }
   }
 
-  async getUser(id: string) {
+  async getUser(id: string, req: Request) {
     try {
+      const decodedUser = req.user as { id: string; email: string };
       const user = await this.prisma.user.findUnique({
         where: {
           id,
@@ -36,6 +38,9 @@ export class UsersService {
       });
       if (!user) {
         throw new ForbiddenException(`user not found`);
+      }
+      if (user && user.id !== decodedUser.id) {
+        throw new ForbiddenException();
       }
       return user;
     } catch (error) {
