@@ -5,6 +5,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { configs } from './config';
 import * as bodyParser from 'body-parser';
 import * as cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -16,6 +17,21 @@ async function bootstrap() {
   );
   app.use(bodyParser.json());
   app.use(cookieParser());
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+    }),
+  );
+  const corsOption = {
+    origin: '*',
+    methods: 'GET, HEAD, PUT, PATCH, POST, DELETE, OPTIONS',
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+    credentials: true,
+    exposedHeaders: ['set-cookie', 'Set-Cookie'],
+  };
+
+  app.enableCors(corsOption);
   const config = new DocumentBuilder()
     .setTitle('Auth_api')
     .setDescription('The Pern authentication api ')
