@@ -10,35 +10,82 @@ export class AuthService {
   async signup(dto: AuthDTO) {
     const { email, password } = dto;
 
-    const existUser = await this.prisma.user.findUnique({
-      where: {
-        email,
-      },
-    });
-    Logger.log(existUser);
-    if (existUser) {
-      throw new BadRequestException('Email already exist');
+    try {
+      const existUser = await this.prisma.user.findUnique({
+        where: {
+          email,
+        },
+      });
+      Logger.log(existUser);
+      if (existUser) {
+        throw new BadRequestException('Email already exist');
+      }
+
+      const hash = await this.hashPassword(password);
+
+      await this.prisma.user.create({
+        data: {
+          email,
+          hashedPassword: hash,
+        },
+      });
+
+      return { message: 'sign up user successfully' };
+    } catch (error) {
+      Logger.error(error);
+      throw new Error('Failed to sign up user');
     }
-
-    const hash = await this.hassPassword(password);
-
-    await this.prisma.user.create({
-      data: {
-        email,
-        hashedPassword: hash,
-      },
-    });
-
-    return { message: 'sign up user successfully' };
   }
-  async signin() {
-    return { message: 'sign in a user' };
+  async signin(dto: AuthDTO) {
+    const { email, password } = dto;
+
+    try {
+      const existUser = await this.prisma.user.findUnique({
+        where: {
+          email,
+        },
+      });
+
+      Logger.log(existUser);
+      if (!existUser) {
+        throw new BadRequestException('Wrong email or password');
+      }
+
+      const isMatch = await this.verifyHashPassword(
+        existUser.hashedPassword,
+        password,
+      );
+
+      if (isMatch) {
+        Logger.log('Password matched');
+      } else {
+        throw new BadRequestException('Password not match');
+      }
+      return { message: 'sign in a user' };
+    } catch (error) {
+      Logger.error(error);
+      throw new Error('Failed to sign in');
+    }
   }
   async signout() {
     return { message: 'sign out a user' };
   }
 
-  hassPassword = async (password: string) => {
-    return await argon2.hash(password);
+  hashPassword = async (password: string) => {
+    try {
+      return await argon2.hash(password);
+    } catch (error) {
+      Logger.error(error, 'Error hashing password:');
+      throw new Error('Failed to hash password');
+    }
+  };
+
+  verifyHashPassword = async (hash: any, password: string) => {
+    try {
+      return await argon2.verify(hash, password);
+    } catch (error) {
+      Logger.error(error, 'Error verifying password:');
+      throw new Error('Failed to verify password');
+    }
   };
 }
