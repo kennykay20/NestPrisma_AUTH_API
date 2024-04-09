@@ -76,7 +76,7 @@ export class AuthService {
         if (!accessToken) {
           throw new ForbiddenException();
         }
-        res.cookie('PERM_AUTH', accessToken);
+        res.cookie('perm_auth', accessToken);
         res
           .status(200)
           .json({ message: 'login successfully', token: accessToken });
@@ -89,7 +89,7 @@ export class AuthService {
     }
   }
   async signout(req: Request, res: Response) {
-    res.clearCookie('PERM_AUTH');
+    res.clearCookie('perm_auth');
     return res.status(200).json({ message: 'Logged our successfully' });
   }
 
