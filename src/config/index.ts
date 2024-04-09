@@ -9,6 +9,7 @@ const envSchema = joi
   .object({
     NODE_ENV: joi.string().valid('development', 'staging').required(),
     HTTP_PORT: joi.string().required(),
+    SECRET: joi.string().required(),
   })
   .unknown()
   .required();
@@ -24,4 +25,5 @@ export const configs = {
     http_port: envVal.HTTP_PORT,
   },
   node_env: envVal.NODE_ENV,
+  secret: envVal.SECRET,
 };

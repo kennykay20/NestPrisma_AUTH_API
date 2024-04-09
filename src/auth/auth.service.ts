@@ -2,10 +2,15 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthDTO } from '../dto/auth.dto';
 import * as argon2 from 'argon2';
+import { JwtService } from '@nestjs/jwt';
+import { configs } from '../config';
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private jwt: JwtService,
+  ) {}
 
   async signup(dto: AuthDTO) {
     const { email, password } = dto;
@@ -16,7 +21,6 @@ export class AuthService {
           email,
         },
       });
-      Logger.log(existUser);
       if (existUser) {
         throw new BadRequestException('Email already exist');
       }
@@ -46,7 +50,6 @@ export class AuthService {
         },
       });
 
-      Logger.log(existUser);
       if (!existUser) {
         throw new BadRequestException('Wrong email or password');
       }
@@ -58,10 +61,16 @@ export class AuthService {
 
       if (isMatch) {
         Logger.log('Password matched');
+        // sign in jwt
+        const payload = {
+          userId: existUser.id,
+          email: existUser.email,
+        };
+        const accessToken = await this.signInToken(payload);
+        return { accessToken };
       } else {
         throw new BadRequestException('Password not match');
       }
-      return { message: 'sign in a user' };
     } catch (error) {
       Logger.error(error);
       throw new Error('Failed to sign in');
@@ -83,6 +92,19 @@ export class AuthService {
   verifyHashPassword = async (hash: any, password: string) => {
     try {
       return await argon2.verify(hash, password);
+    } catch (error) {
+      Logger.error(error, 'Error verifying password:');
+      throw new Error('Failed to verify password');
+    }
+  };
+
+  signInToken = async (args: { userId: string; email: string }) => {
+    try {
+      const payload = { sub: args.userId, email: args.email };
+      const accessToken = await this.jwt.signAsync(payload, {
+        secret: configs.secret,
+      });
+      return accessToken;
     } catch (error) {
       Logger.error(error, 'Error verifying password:');
       throw new Error('Failed to verify password');
