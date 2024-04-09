@@ -88,8 +88,9 @@ export class AuthService {
       throw new Error('Failed to sign in');
     }
   }
-  async signout() {
-    return { message: 'sign out a user' };
+  async signout(req: Request, res: Response) {
+    res.clearCookie('PERM_AUTH');
+    return res.status(200).json({ message: 'Logged our successfully' });
   }
 
   hashPassword = async (password: string) => {
